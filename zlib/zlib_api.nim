@@ -14,7 +14,7 @@ const
   basePath = currentSourcePath.rsplit({DirSep, AltSep}, 1)[0]
   zlibPath = basePath & "/csources"
 
-{.passC: "-I" & quoteShell(zlibPath).}
+{.passc: "-I" & quoteShell(zlibPath).}
 {.compile: zlibPath & "/adler32.c".}
 {.compile: zlibPath & "/compress.c".}
 {.compile: zlibPath & "/crc32.c".}
@@ -278,7 +278,7 @@ proc uncompress*(dest: ptr cuchar, destLen: var culong,
 
 proc compressBound*(sourceLen: culong): culong {.cdecl, importc.}
 
-proc inflateSyncPoint*(z: var Zstream): ZError {.cdecl,
+proc inflateSyncPoint*(z: var ZStream): ZError {.cdecl,
   importc: "inflateSyncPoint".}
 
 proc getCrcTable*(): pointer {.cdecl, importc: "get_crc_table".}
