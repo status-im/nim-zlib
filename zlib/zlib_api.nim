@@ -14,7 +14,7 @@ const
   basePath = currentSourcePath.rsplit({DirSep, AltSep}, 1)[0]
   zlibPath = basePath & "/csources"
 
-{.passc: "-I" & quoteShell(zlibPath).}
+{.passc: "-I" & quoteShell(zlibPath) & " -DHAVE_UNISTD_H".}
 {.compile: zlibPath & "/adler32.c".}
 {.compile: zlibPath & "/compress.c".}
 {.compile: zlibPath & "/crc32.c".}
