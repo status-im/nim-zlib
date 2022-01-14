@@ -1,5 +1,5 @@
 # nim-zlib
-# Copyright (c) 2021 Status Research & Development GmbH
+# Copyright (c) 2021-2022 Status Research & Development GmbH
 # Licensed under either of
 #  * Apache License, version 2.0, ([LICENSE-APACHE](LICENSE-APACHE))
 #  * MIT license ([LICENSE-MIT](LICENSE-MIT))
@@ -20,14 +20,11 @@ requires "nim >= 1.2.0"
 requires "stew >= 0.1.0"
 
 # Helper functions
-proc test(env, path: string) =
-  # Compilation language is controlled by TEST_LANG
-  var lang = "c"
-  if existsEnv("TEST_LANG"):
-    lang = getEnv("TEST_LANG")
-
-  exec "nim " & lang & " " & env &
-    " -r --hints:off --skipParentCfg --styleCheck:usages --styleCheck:error " & path
+proc test(args, path: string) =
+  if not dirExists "build":
+    mkDir "build"
+  exec "nim " & getEnv("TEST_LANG", "c") & " " & getEnv("NIMFLAGS") & " " & args &
+    " --outdir:build -r --hints:off --warnings:off --skipParentCfg " & path
 
 task test, "Run all tests":
   test "-d:debug", "tests/test_all"
