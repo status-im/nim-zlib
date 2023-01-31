@@ -15,14 +15,14 @@ const
   GZIP_DECOMPRESS_LIMIT* = 20 shl 20  # 20mb
 
 proc gzip*[T: byte|char](N: type, source: openArray[T]): Result[N, string] =
-  # all these cast[ptr cuchar] is need because
+  # all these cast[ptr uint8] is need because
   # clang++ will complaints about incompatible
   # pointer types
   var mz = ZStream(
     next_in: if source.len == 0:
                nil
              else:
-               cast[ptr cuchar](source[0].unsafeAddr),
+               cast[ptr uint8](source[0].unsafeAddr),
     avail_in: source.len.cuint
   )
 
@@ -57,7 +57,7 @@ proc gzip*[T: byte|char](N: type, source: openArray[T]): Result[N, string] =
   res[8] = 0.CC
   res[9] = 0xFF.CC
 
-  mz.next_out = cast[ptr cuchar](res[10].addr)
+  mz.next_out = cast[ptr uint8](res[10].addr)
   mz.avail_out = (res.len - 10).cuint
   r = mz.deflate(Z_FINISH)
 
@@ -93,7 +93,7 @@ proc ungzip*[T: byte|char](N: type,
     next_in: if data.len == 0:
                nil
              else:
-               cast[ptr cuchar](data[10].unsafeAddr),
+               cast[ptr uint8](data[10].unsafeAddr),
     avail_in: data.len.cuint - 18
   )
 
@@ -107,7 +107,7 @@ proc ungzip*[T: byte|char](N: type,
   var buf: array[0xFFFF, byte]
 
   while true:
-    mz.next_out  = cast[ptr cuchar](buf[0].addr)
+    mz.next_out  = cast[ptr uint8](buf[0].addr)
     mz.avail_out = buf.len.cuint
     r = mz.inflate(Z_SYNC_FLUSH)
     let outSize = buf.len - mz.avail_out.int

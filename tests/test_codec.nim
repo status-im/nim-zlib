@@ -13,7 +13,7 @@ import
 
 proc decompress[T: byte | char](data: openArray[T]): seq[byte] =
   var mz = ZStream(
-    next_in: cast[ptr cuchar](data[0].unsafeAddr),
+    next_in: cast[ptr uint8](data[0].unsafeAddr),
     avail_in: data.len.cuint
   )
 
@@ -23,7 +23,7 @@ proc decompress[T: byte | char](data: openArray[T]): seq[byte] =
   var buf: array[0xFFFF, byte]
 
   while true:
-    mz.next_out  = cast[ptr cuchar](buf[0].addr)
+    mz.next_out  = cast[ptr uint8](buf[0].addr)
     mz.avail_out = buf.len.cuint
     let r = mz.inflate(Z_SYNC_FLUSH)
     let outSize = buf.len - mz.avail_out.int
@@ -40,7 +40,7 @@ proc decompress[T: byte | char](data: openArray[T]): seq[byte] =
 
 proc compress[T: byte | char](data: openArray[T]): seq[byte] =
   var mz = ZStream(
-    next_in: if data.len == 0: nil else: cast[ptr cuchar](data[0].unsafeAddr),
+    next_in: if data.len == 0: nil else: cast[ptr uint8](data[0].unsafeAddr),
     avail_in: data.len.cuint
   )
 
@@ -53,12 +53,12 @@ proc compress[T: byte | char](data: openArray[T]): seq[byte] =
     strategy = Z_DEFAULT_STRATEGY) == Z_OK
   )
 
-  let maxSize = mz.deflateBound(data.len.culong).int
+  #let maxSize = mz.deflateBound(data.len.culong).int
   var res: seq[byte]
   var buf: array[0xFFFF, byte]
 
   while true:
-    mz.next_out  = cast[ptr cuchar](buf[0].addr)
+    mz.next_out  = cast[ptr uint8](buf[0].addr)
     mz.avail_out = buf.len.cuint
     let r = mz.deflate(Z_FINISH)
     let outSize = buf.len - mz.avail_out.int

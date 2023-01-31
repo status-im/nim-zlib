@@ -111,10 +111,10 @@ type
   FreeFunc* = proc(ud: pointer, address: pointer){.cdecl.}
 
   ZStream* {.final, pure.} = object
-    next_in*  : ptr cuchar
+    next_in*  : ptr uint8
     avail_in* : cuint
     total_in* : culong
-    next_out* : ptr cuchar
+    next_out* : ptr uint8
     avail_out*: cuint
     total_out*: culong
 
@@ -199,7 +199,7 @@ proc inflateReset2*(zs: var ZStream,
 
 proc zError*(err: ZError): cstring {.cdecl, importc: "zError".}
 
-proc crc32*(crc: culong, buf: ptr cuchar, length: cuint): culong {.cdecl,
+proc crc32*(crc: culong, buf: ptr uint8, length: cuint): culong {.cdecl,
   importc: "crc32".}
 
 const
@@ -209,14 +209,14 @@ func crc32*[T: byte|char](input: openArray[T]): culong =
   let dataPtr = if input.len == 0:
                   nil
                 else:
-                  cast[ptr cuchar](input[0].unsafeAddr)
+                  cast[ptr uint8](input[0].unsafeAddr)
   crc32(Z_CRC32_INIT,
     dataPtr,
     input.len.cuint
   ).culong
 
 proc deflateSetDictionary*(zs: var ZStream,
-  dictionary: ptr cuchar, dictLength: cuint): ZError {.cdecl,
+  dictionary: ptr uint8, dictLength: cuint): ZError {.cdecl,
     importc: "deflateSetDictionary".}
 
 proc deflateCopy*(dest: ZStream, source: var ZStream): ZError {.cdecl,
@@ -238,11 +238,11 @@ proc deflateSetHeader*(zs: var ZStream,
     importc: "deflateSetHeader".}
 
 proc inflateSetDictionary*(zs: var ZStream,
-  dictionary: ptr cuchar, dictLength: cuint): ZError {.cdecl,
+  dictionary: ptr uint8, dictLength: cuint): ZError {.cdecl,
     importc: "inflateSetDictionary".}
 
 proc inflateGetDictionary*(zs: var ZStream,
-  dictionary: ptr cuchar, dictLength: ptr cuint): ZError {.cdecl,
+  dictionary: ptr uint8, dictLength: ptr cuint): ZError {.cdecl,
     importc: "inflateGetDictionary".}
 
 proc inflateSync*(zs: var ZStream): ZError {.cdecl,
@@ -264,16 +264,16 @@ proc inflateGetHeader*(zs: var ZStream, head: ptr GZHeader): ZError {.cdecl,
 proc zlibCompileFlags*(): culong {.cdecl,
   importc: "zlibCompileFlags".}
 
-proc compress*(dest: ptr cuchar, destLen: var culong,
-  source: ptr cuchar, sourceLen: culong): ZError {.cdecl,
+proc compress*(dest: ptr uint8, destLen: var culong,
+  source: ptr uint8, sourceLen: culong): ZError {.cdecl,
     importc: "compress".}
 
-proc compress2*(dest: ptr cuchar, destLen: var culong,
-  source: ptr cuchar, sourceLen: culong, level: cint): ZError {.cdecl,
+proc compress2*(dest: ptr uint8, destLen: var culong,
+  source: ptr uint8, sourceLen: culong, level: cint): ZError {.cdecl,
     importc: "compress2".}
 
-proc uncompress*(dest: ptr cuchar, destLen: var culong,
-  source: ptr cuchar, sourceLen: culong): ZError {.cdecl,
+proc uncompress*(dest: ptr uint8, destLen: var culong,
+  source: ptr uint8, sourceLen: culong): ZError {.cdecl,
     importc: "uncompress".}
 
 proc compressBound*(sourceLen: culong): culong {.cdecl, importc.}
