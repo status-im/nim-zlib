@@ -1,5 +1,5 @@
 # nim-zlib
-# Copyright (c) 2021-2022 Status Research & Development GmbH
+# Copyright (c) 2021-2023 Status Research & Development GmbH
 # Licensed under either of
 #  * Apache License, version 2.0, ([LICENSE-APACHE](LICENSE-APACHE))
 #  * MIT license ([LICENSE-MIT](LICENSE-MIT))
@@ -30,3 +30,7 @@ task test, "Run all tests":
   test "-d:debug", "tests/test_all"
   test "-d:release", "tests/test_all"
   test "--threads:on -d:release", "tests/test_all"
+  if (NimMajor, NimMinor) > (1, 6):
+    test "-d:debug", "tests/test_all"
+    test "-d:release", "tests/test_all"
+    test "--threads:on -d:release", "tests/test_all"
