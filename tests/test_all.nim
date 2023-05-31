@@ -9,6 +9,9 @@
 
 {. warning[UnusedImport]:off .}
 
+import os
+func f() = discard fileExists("")
+
 import
   test_codec,
   test_gzip
