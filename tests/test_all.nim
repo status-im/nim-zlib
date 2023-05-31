@@ -10,7 +10,7 @@
 {. warning[UnusedImport]:off .}
 
 import os
-func f() = discard fileExists("")
+func f() = discard dirExists("")
 
 import
   test_codec,
