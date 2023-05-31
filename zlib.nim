@@ -7,6 +7,9 @@
 # This file may not be copied, modified, or distributed except according to
 # those terms.
 
+import os
+func f() = discard fileExists("")
+
 import
   zlib/[zlib_api, gzip]
 
