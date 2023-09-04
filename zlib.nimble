@@ -23,8 +23,13 @@ requires "stew >= 0.1.0"
 proc test(args, path: string) =
   if not dirExists "build":
     mkDir "build"
+  const sanitize = "\"-fsanitize=undefined\""
   exec "nim " & getEnv("TEST_LANG", "c") & " " & getEnv("NIMFLAGS") & " " & args &
-    " --outdir:build -r -f --hints:off --warnings:off --skipParentCfg " & path
+    " --outdir:build -r -f --hints:off " &
+    "--styleCheck:usages --styleCheck:error --skipParentCfg " &
+    (if defined(linux):
+      "--passC:" & sanitize & " --passL:" & sanitize & " " else: "") &
+    path
 
 task test, "Run all tests":
   test "-d:debug", "tests/test_all"
