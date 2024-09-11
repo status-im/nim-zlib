@@ -32,10 +32,10 @@ proc test(args, path: string) =
     path
 
 task test, "Run all tests":
-  test "-d:debug", "tests/test_all"
-  test "-d:release", "tests/test_all"
-  test "--threads:on -d:release", "tests/test_all"
+  test "-d:debug --mm:refc", "tests/test_all"
+  test "-d:release --mm:refc", "tests/test_all"
+  test "--threads:on -d:release --mm:refc", "tests/test_all"
   if (NimMajor, NimMinor) > (1, 6):
-    test "-d:debug  --mm:refc", "tests/test_all"
-    test "-d:release --mm:refc", "tests/test_all"
-    test "--threads:on -d:release --mm:refc", "tests/test_all"
+    test "-d:debug  --mm:orc", "tests/test_all"
+    test "-d:release --mm:orc", "tests/test_all"
+    test "--threads:on -d:release --mm:orc", "tests/test_all"
