@@ -8,7 +8,7 @@
 # those terms.
 
 import
-  stew/results,
+  results,
   ./zlib_api
 
 const

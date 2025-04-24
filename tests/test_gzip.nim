@@ -9,7 +9,7 @@
 
 import
   std/[unittest, os],
-  stew/results,
+  results,
   ../zlib/gzip
 
 proc toBytes(s: string): seq[byte] =

@@ -18,6 +18,7 @@ skipDirs      = @["tests"]
 
 requires "nim >= 1.6.0"
 requires "stew >= 0.1.0"
+requires "results >= 0.5.1"
 
 # Helper functions
 proc test(args, path: string) =
