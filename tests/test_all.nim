@@ -11,4 +11,5 @@
 
 import
   test_codec,
-  test_gzip
+  test_gzip,
+  test_incremental
