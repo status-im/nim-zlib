@@ -42,6 +42,12 @@ type
 # Private helpers
 # ------------------------------------------------------------------------------
 
+when NimMajor == 1 and NimMinor == 6:
+  # Provide missing `substr()` variant for nim 1.6. Earlier
+  # NIM versions are not supported here.
+  proc substr(s: openArray[char]): string =
+    s.join.substr
+
 proc extractLine(gz: GUnzipRef; start: int): Opt[string] =
   ## Extract the first string from line buffer. Any newline characters at
   ## the line end will be stripped. The argument `start` is the position
@@ -96,7 +102,7 @@ proc loadInput(gz: GUnzipRef; data: openArray[char]): string =
     (addr buffer[0]).copyMem(gz.mz.next_in, gz.mz.avail_in)
 
   # Append new data
-  (addr buffer[gz.mz.avail_in]).copyMem(addr data[0], data.len)
+  (addr buffer[gz.mz.avail_in]).copyMem(unsafeAddr data[0], data.len)
 
   # Realign gzip input buffer and fill as much as possible from `buffer[]`
   gz.mz.next_in = cast[ptr uint8](addr gz.nextInBuf[0])
