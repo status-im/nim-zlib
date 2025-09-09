@@ -89,7 +89,7 @@ proc loadInput(gz: GUnzipRef; data: openArray[char]): string =
   #    nextInBuf
   #    next_in
   #
-  var buffer = newSeqUninit[char](gz.mz.avail_in.int + data.len)
+  var buffer = newSeq[char](gz.mz.avail_in.int + data.len)
 
   # Collect remaining data first
   if 0 < gz.mz.avail_in:
