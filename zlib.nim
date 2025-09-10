@@ -8,7 +8,7 @@
 # those terms.
 
 import
-  zlib/[zlib_api, gzip]
+  zlib/[zlib_api, gzip, gunzip_incremental]
 
 export
-  zlib_api, gzip
+  zlib_api, gzip, gunzip_incremental
