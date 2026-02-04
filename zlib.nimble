@@ -1,5 +1,5 @@
 # nim-zlib
-# Copyright (c) 2021-2024 Status Research & Development GmbH
+# Copyright (c) 2021-2026 Status Research & Development GmbH
 # Licensed under either of
 #  * Apache License, version 2.0, ([LICENSE-APACHE](LICENSE-APACHE))
 #  * MIT license ([LICENSE-MIT](LICENSE-MIT))
@@ -26,7 +26,7 @@ proc test(args, path: string) =
     mkDir "build"
   const sanitize = "\"-fsanitize=undefined\""
   exec "nim " & getEnv("TEST_LANG", "c") & " " & getEnv("NIMFLAGS") & " " & args &
-    " --outdir:build -r -f --hints:off " &
+    " --outdir:build -r -f --verbosity:0 " &
     "--styleCheck:usages --styleCheck:error --skipParentCfg " &
     (if defined(linux):
       "--passC:" & sanitize & " --passL:" & sanitize & " " else: "") &
