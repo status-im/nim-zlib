@@ -10,7 +10,7 @@
 mode = ScriptMode.Verbose
 
 packageName   = "zlib"
-version       = "0.1.0"
+version       = "0.2.0"
 author        = "Status Research & Development GmbH"
 description   = "zlib wrapper in nim"
 license       = "Apache License 2.0"
