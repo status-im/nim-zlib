@@ -11,5 +11,6 @@ jobs:
     uses: status-im/nimbus-common-workflow/.github/workflows/common.yml@main
     with:
       test-command: |
-        env TEST_LANG="c" nimble test
-        env TEST_LANG="cpp" nimble test
+        nimble test_asan
+        env NIMLANG=c nimble test
+        env NIMLANG=cpp nimble test
