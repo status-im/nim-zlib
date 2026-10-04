@@ -88,6 +88,8 @@ proc gzip*[T: byte|char](N: type, source: openArray[T]): Result[N, string] =
 proc ungzip*[T: byte|char](N: type,
   data: openArray[T],
   limit: int = GZIP_DECOMPRESS_LIMIT): Result[N, string] =
+  when N isnot string and N isnot seq[byte]:
+    {.fatal: "unsupported output type".}
 
   var mz = ZStream(
     next_in: if data.len == 0:
@@ -103,15 +105,22 @@ proc ungzip*[T: byte|char](N: type,
   if r != Z_OK:
     return err($r)
 
-  var res: seq[byte]
+  var res: N
   var buf: array[0xFFFF, byte]
 
   while true:
     mz.next_out  = cast[ptr uint8](buf[0].addr)
     mz.avail_out = buf.len.cuint
     r = mz.inflate(Z_SYNC_FLUSH)
-    let outSize = buf.len - mz.avail_out.int
-    res.add toOpenArray(buf, 0, outSize-1)
+    let
+      outSize = buf.len - mz.avail_out.int
+      oldLen = res.len
+    when (NimMajor, NimMinor) >= (2, 2):
+      res.setLenUninit(oldLen + outSize)
+    else:
+      res.setLen(oldLen + outSize)
+    if outSize > 0:
+      copyMem(res[oldLen].addr, buf[0].addr, outSize)
     if res.len > limit:
       return err("exceeds decompression limit")
 
@@ -130,9 +139,4 @@ proc ungzip*[T: byte|char](N: type,
   if r != Z_OK:
     return err($r)
 
-  when N is string:
-    ok(cast[string](res))
-  elif N is seq[byte]:
-    ok(res)
-  else:
-    {.fatal: "unsupported output type".}
+  ok(res)
