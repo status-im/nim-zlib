@@ -16,27 +16,58 @@ description   = "zlib wrapper in nim"
 license       = "Apache License 2.0"
 skipDirs      = @["tests"]
 
-requires "nim >= 1.6.0"
-requires "stew >= 0.1.0"
-requires "results >= 0.5.1"
+requires "nim >= 1.6.0",
+         "stew >= 0.1.0",
+         "results >= 0.5.1"
 
-# Helper functions
-proc test(args, path: string) =
-  if not dirExists "build":
-    mkDir "build"
-  const sanitize = "\"-fsanitize=undefined\""
-  exec "nim " & getEnv("TEST_LANG", "c") & " " & getEnv("NIMFLAGS") & " " & args &
-    " --outdir:build -r -f --verbosity:0 " &
-    "--styleCheck:usages --styleCheck:error --skipParentCfg " &
-    (if defined(linux):
-      "--passC:" & sanitize & " --passL:" & sanitize & " " else: "") &
-    path
+let nimc = getEnv("NIMC", "nim") # Which nim compiler to use
+let lang = getEnv("NIMLANG", "c") # Which backend (c/cpp/js)
+let flags = getEnv("NIMFLAGS", "") # Extra flags for the compiler
+let verbose = getEnv("V", "") notin ["", "0"]
+let platform = getEnv("PLATFORM", "")
+let testArguments = [
+  "-d:debug",
+  "-d:release",
+  "--threads:on -d:release",
+]
+
+from std/os import quoteShell
+
+let cfg =
+  " --styleCheck:usages --styleCheck:error" &
+  (if verbose: "" else: " --verbosity:0") &
+  " --skipParentCfg --skipUserCfg --outdir:build -f " &
+  quoteShell("--nimcache:build/nimcache/$projectName")
+
+proc build(args, path: string) =
+  exec nimc & " " & lang & " " & cfg & " " & flags & " " & args & " " & path
+
+proc run(args, path: string) =
+  build args & " -r", path
 
 task test, "Run all tests":
-  test "-d:debug --mm:refc", "tests/test_all"
-  test "-d:release --mm:refc", "tests/test_all"
-  test "--threads:on -d:release --mm:refc", "tests/test_all"
-  if (NimMajor, NimMinor) > (1, 6):
-    test "-d:debug  --mm:orc", "tests/test_all"
-    test "-d:release --mm:orc", "tests/test_all"
-    test "--threads:on -d:release --mm:orc", "tests/test_all"
+  for args in testArguments:
+    run args & " --mm:refc", "tests/test_all"
+    if (NimMajor, NimMinor) > (1, 6):
+      run args & " --mm:orc", "tests/test_all"
+
+task test_asan, "Run all tests with ASAN":
+  if platform != "x86":
+    try:
+      exec "echo '#if __clang_major__ < 20\n#error\n#endif' | clang -E - >/dev/null"
+    except OSError:
+      return
+
+    # https://clang.llvm.org/docs/AddressSanitizer.html
+    putEnv("ASAN_OPTIONS", "detect_leaks=0:detect_stack_use_after_return=1")
+    # https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+    putEnv("UBSAN_OPTIONS", "print_stacktrace=1")
+    let asanArgs =
+      " --mm:orc -d:useMalloc --cc:clang --debugger:native" &
+      " --passC:-fsanitize=address,undefined" &
+      " --passL:-fsanitize=address,undefined" &
+      " --passC:-fno-sanitize-recover=undefined" &
+      " --passC:-fno-sanitize-merge" &
+      " --passC:-fno-omit-frame-pointer"
+    for args in testArguments:
+      run args & asanArgs, "tests/test_all"
