@@ -10,14 +10,13 @@
 mode = ScriptMode.Verbose
 
 packageName   = "zlib"
-version       = "0.2.1"
+version       = "0.3.0"
 author        = "Status Research & Development GmbH"
 description   = "zlib wrapper in nim"
 license       = "Apache License 2.0"
 skipDirs      = @["tests"]
 
-requires "nim >= 1.6.0",
-         "stew >= 0.1.0",
+requires "nim >= 1.6.16",
          "results >= 0.5.1"
 
 let nimc = getEnv("NIMC", "nim") # Which nim compiler to use

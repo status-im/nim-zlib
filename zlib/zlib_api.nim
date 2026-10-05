@@ -7,8 +7,8 @@
 # This file may not be copied, modified, or distributed except according to
 # those terms.
 
-import strutils
-from os import quoteShell, DirSep, AltSep
+import std/strutils
+from std/os import quoteShell, DirSep, AltSep
 
 const
   basePath = currentSourcePath.rsplit({DirSep, AltSep}, 1)[0]
