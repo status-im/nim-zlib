@@ -209,7 +209,7 @@ func crc32*[T: byte|char](input: openArray[T]): culong =
   let dataPtr = if input.len == 0:
                   nil
                 else:
-                  cast[ptr uint8](input[0].unsafeAddr)
+                  cast[ptr uint8](input[0].addr)
   crc32(Z_CRC32_INIT,
     dataPtr,
     input.len.cuint

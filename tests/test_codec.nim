@@ -13,7 +13,7 @@ import
 
 proc decompress[T: byte | char](data: openArray[T]): seq[byte] =
   var mz = ZStream(
-    next_in: cast[ptr uint8](data[0].unsafeAddr),
+    next_in: cast[ptr uint8](data[0].addr),
     avail_in: data.len.cuint
   )
 
@@ -40,7 +40,7 @@ proc decompress[T: byte | char](data: openArray[T]): seq[byte] =
 
 proc compress[T: byte | char](data: openArray[T]): seq[byte] =
   var mz = ZStream(
-    next_in: if data.len == 0: nil else: cast[ptr uint8](data[0].unsafeAddr),
+    next_in: if data.len == 0: nil else: cast[ptr uint8](data[0].addr),
     avail_in: data.len.cuint
   )
 
@@ -76,7 +76,7 @@ proc compress[T: byte | char](data: openArray[T]): seq[byte] =
 proc toBytes(s: string): seq[byte] =
   result = newSeq[byte](s.len)
   if s.len > 0:
-    copyMem(result[0].addr, s[0].unsafeAddr, s.len)
+    copyMem(result[0].addr, s[0].addr, s.len)
 
 suite "codec test suite":
   const

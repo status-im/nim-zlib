@@ -22,7 +22,7 @@ proc gzip*[T: byte|char](N: type, source: openArray[T]): Result[N, string] =
     next_in: if source.len == 0:
                nil
              else:
-               cast[ptr uint8](source[0].unsafeAddr),
+               cast[ptr uint8](source[0].addr),
     avail_in: source.len.cuint
   )
 
@@ -95,7 +95,7 @@ proc ungzip*[T: byte|char](N: type,
     next_in: if data.len == 0:
                nil
              else:
-               cast[ptr uint8](data[10].unsafeAddr),
+               cast[ptr uint8](data[10].addr),
     avail_in: data.len.cuint - 18
   )
 
