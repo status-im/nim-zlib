@@ -15,7 +15,7 @@ import
 proc toBytes(s: string): seq[byte] =
   result = newSeq[byte](s.len)
   if s.len > 0:
-    copyMem(result[0].addr, s[0].unsafeAddr, s.len)
+    copyMem(result[0].addr, s[0].addr, s.len)
 
 suite "gzip test suite":
   const

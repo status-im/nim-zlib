@@ -16,7 +16,7 @@ description   = "zlib wrapper in nim"
 license       = "Apache License 2.0"
 skipDirs      = @["tests"]
 
-requires "nim >= 1.6.16",
+requires "nim >= 2.0.2",
          "results >= 0.5.1"
 
 let nimc = getEnv("NIMC", "nim") # Which nim compiler to use
@@ -47,16 +47,10 @@ proc run(args, path: string) =
 task test, "Run all tests":
   for args in testArguments:
     run args & " --mm:refc", "tests/test_all"
-    if (NimMajor, NimMinor) > (1, 6):
-      run args & " --mm:orc", "tests/test_all"
+    run args & " --mm:orc", "tests/test_all"
 
 task test_asan, "Run all tests with ASAN":
   if platform != "x86":
-    try:
-      exec "echo '#if __clang_major__ < 20\n#error\n#endif' | clang -E - >/dev/null"
-    except OSError:
-      return
-
     # https://clang.llvm.org/docs/AddressSanitizer.html
     putEnv("ASAN_OPTIONS", "detect_leaks=0:detect_stack_use_after_return=1")
     # https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
