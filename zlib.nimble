@@ -16,7 +16,7 @@ description   = "zlib wrapper in nim"
 license       = "Apache License 2.0"
 skipDirs      = @["tests"]
 
-requires "nim >= 2.2.4",
+requires "nim >= 2.2.6",
          "results >= 0.5.1"
 
 let nimc = getEnv("NIMC", "nim") # Which nim compiler to use
