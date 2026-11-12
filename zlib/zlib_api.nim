@@ -1,5 +1,5 @@
 # nim-zlib
-# Copyright (c) 2021 Status Research & Development GmbH
+# Copyright (c) 2021-2026 Status Research & Development GmbH
 # Licensed under either of
 #  * Apache License, version 2.0, ([LICENSE-APACHE](LICENSE-APACHE))
 #  * MIT license ([LICENSE-MIT](LICENSE-MIT))
@@ -105,6 +105,7 @@ type
     Z_FULL_FLUSH    = 3
     Z_FINISH        = 4
     Z_BLOCK         = 5
+    Z_TREES         = 6
 
 type
   AllocFunc* = proc(ud: pointer, items: cuint, size: cuint): pointer {.cdecl.}
@@ -130,7 +131,7 @@ type
   GZHeader*{.final, pure.} = object # not defined yet (see zlib.h)
 
 const
-  ZLIB_VERSION = "1.2.11"
+  ZLIB_VERSION = "1.4"
   Z_DEFAULT_MEM_LEVEL*   = Z_MEM_8
   Z_DEFAULT_WINDOW_BITS* = Z_WINDOW_BITS_15
   Z_DEFAULT_LEVEL*       = Z_LEVEL_6
@@ -255,7 +256,7 @@ proc inflatePrime*(zs: var ZStream,
   bits: cint, value: cint): ZError {.cdecl,
     importc: "inflatePrime".}
 
-proc inflateMark*(zs: var ZStream): ZError {.cdecl,
+proc inflateMark*(zs: var ZStream): clong {.cdecl,
   importc: "inflateMark".}
 
 proc inflateGetHeader*(zs: var ZStream, head: ptr GZHeader): ZError {.cdecl,
