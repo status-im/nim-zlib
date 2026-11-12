@@ -1,5 +1,5 @@
 # nim-zlib
-# Copyright (c) 2021 Status Research & Development GmbH
+# Copyright (c) 2021-2026 Status Research & Development GmbH
 # Licensed under either of
 #  * Apache License, version 2.0, ([LICENSE-APACHE](LICENSE-APACHE))
 #  * MIT license ([LICENSE-MIT](LICENSE-MIT))
@@ -79,6 +79,9 @@ proc toBytes(s: string): seq[byte] =
     copyMem(result[0].addr, s[0].addr, s.len)
 
 suite "codec test suite":
+  test "ZLIB_VERSION matches the compiled zlib":
+    check $zlibVersion() == ZLIB_VERSION
+
   const
     rawFolder = "tests" / "data"
 
