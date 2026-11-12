@@ -23,187 +23,339 @@ const
 {.compile: zlibPath & "/gzlib.c".}
 {.compile: zlibPath & "/gzread.c".}
 {.compile: zlibPath & "/gzwrite.c".}
+{.compile: zlibPath & "/infback.c".}
 {.compile: zlibPath & "/inffast.c".}
 {.compile: zlibPath & "/inflate.c".}
-{.compile: zlibPath & "/infback.c".}
 {.compile: zlibPath & "/inftrees.c".}
 {.compile: zlibPath & "/trees.c".}
 {.compile: zlibPath & "/uncompr.c".}
 {.compile: zlibPath & "/zutil.c".}
 
 type
+  gzFile_s = object
+
+  # zconf.h defines `z_off_t` as `off_t`, due to `HAVE_UNISTD_H`
+  z_off_t {.importc: "off_t", header: "<sys/types.h>".} = clong
+
+
+
+const
+  ZLIB_VERSION* = "1.4"
+  ZLIB_VERNUM* = 0x1400
+  ZLIB_VER_MAJOR* = 1
+  ZLIB_VER_MINOR* = 4
+  ZLIB_VER_REVISION* = 0
+  ZLIB_VER_SUBREVISION* = 0
+
+
+type
+  AllocFunc* = proc (opaque: pointer; items: cuint; size: cuint): pointer {.cdecl.}
+  FreeFunc* = proc (opaque: pointer; address: pointer) {.cdecl.}
+  ZStream* {.bycopy.} = object
+    next_in*: ptr uint8
+    avail_in*: cuint
+    total_in*: culong
+    next_out*: ptr uint8
+    avail_out*: cuint
+    total_out*: culong
+    msg*: cstring
+    state*: pointer
+    zalloc*: AllocFunc
+    zfree*: FreeFunc
+    opaque*: pointer
+    dataType*: cint
+    adler*: culong
+    reserved*: culong
+
+  ZStreamp* = ptr ZStream
+
+
+type
+  GZHeader* {.bycopy.} = object
+    text*: cint
+    time*: culong
+    xflags*: cint
+    os*: cint
+    extra*: ptr uint8
+    extra_len*: cuint
+    extra_max*: cuint
+    name*: ptr uint8
+    name_max*: cuint
+    comment*: ptr uint8
+    comm_max*: cuint
+    hcrc*: cint
+    done*: cint
+
+  GZHeaderp* = ptr GZHeader
+
+
+type
+  ZFlush* {.size: sizeof(cint).} = enum
+    Z_NO_FLUSH = 0, Z_PARTIAL_FLUSH = 1, Z_SYNC_FLUSH = 2, Z_FULL_FLUSH = 3, Z_FINISH = 4,
+    Z_BLOCK = 5, Z_TREES = 6
+
+
+
+type
   ZError* {.size: sizeof(cint).} = enum
-    Z_PARAM_ERROR   = -10000
-    Z_VERSION_ERROR = -6
-    Z_BUF_ERROR     = -5
-    Z_MEM_ERROR     = -4
-    Z_DATA_ERROR    = -3
-    Z_STREAM_ERROR  = -2
-    Z_ERRNO         = -1
-    Z_OK            = 0
-    Z_STREAM_END    = 1
-    Z_NEED_DICT     = 2
+    Z_VERSION_ERROR = -6, Z_BUF_ERROR = -5, Z_MEM_ERROR = -4, Z_DATA_ERROR = -3,
+    Z_STREAM_ERROR = -2, Z_ERRNO = -1, Z_OK = 0, Z_STREAM_END = 1, Z_NEED_DICT = 2
 
+
+
+type
   ZLevel* {.size: sizeof(cint).} = enum
-    Z_DEFAULT_COMPRESSION  = -1
-    Z_NO_COMPRESSION       = 0
-    Z_BEST_SPEED           = 1
-    Z_LEVEL_2              = 2
-    Z_LEVEL_3              = 3
-    Z_LEVEL_4              = 4
-    Z_LEVEL_5              = 5
-    Z_LEVEL_6              = 6
-    Z_LEVEL_7              = 7
-    Z_LEVEL_8              = 8
-    Z_BEST_COMPRESSION     = 9
-    Z_UBER_COMPRESSION     = 10
+    Z_DEFAULT_COMPRESSION = -1, Z_NO_COMPRESSION = 0, Z_BEST_SPEED = 1, Z_LEVEL_2 = 2,
+    Z_LEVEL_3 = 3, Z_LEVEL_4 = 4, Z_LEVEL_5 = 5, Z_LEVEL_6 = 6, Z_LEVEL_7 = 7, Z_LEVEL_8 = 8,
+    Z_BEST_COMPRESSION = 9
 
-  ZMemLevel* {.size: sizeof(cint).} = enum
-    Z_MEM_1 = 1
-    Z_MEM_2 = 2
-    Z_MEM_3 = 3
-    Z_MEM_4 = 4
-    Z_MEM_5 = 5
-    Z_MEM_6 = 6
-    Z_MEM_7 = 7
-    Z_MEM_8 = 8
-    Z_MEM_9 = 9
 
+
+type
+  ZStrategy* {.size: sizeof(cint).} = enum
+    Z_DEFAULT_STRATEGY = 0, Z_FILTERED = 1, Z_HUFFMAN_ONLY = 2, Z_RLE = 3, Z_FIXED = 4
+
+
+
+const
+  Z_BINARY* = 0
+  Z_TEXT* = 1
+  Z_ASCII* = Z_TEXT
+  Z_UNKNOWN* = 2
+
+
+type
   ZMethod* {.size: sizeof(cint).} = enum
     Z_DEFLATED = 8
 
-  ZWindowBits* {.size: sizeof(cint).} = enum
-    Z_RAW_DEFLATE         = -15
-    Z_RAW_WINDOW_BITS_14  = -14
-    Z_RAW_WINDOW_BITS_13  = -13
-    Z_RAW_WINDOW_BITS_12  = -12
-    Z_RAW_WINDOW_BITS_11  = -11
-    Z_RAW_WINDOW_BITS_10  = -10
-    Z_RAW_WINDOW_BITS_9   = -9
-    Z_RAW_WINDOW_BITS_8   = -8
 
-    Z_WINDOW_BITS_8       = 8
-    Z_WINDOW_BITS_9       = 9
-    Z_WINDOW_BITS_10      = 10
-    Z_WINDOW_BITS_11      = 11
-    Z_WINDOW_BITS_12      = 12
-    Z_WINDOW_BITS_13      = 13
-    Z_WINDOW_BITS_14      = 14
-    Z_WINDOW_BITS_15      = 15
-
-  ZStrategy* {.size: sizeof(cint).} = enum
-    Z_DEFAULT_STRATEGY = 0
-    Z_FILTERED         = 1
-    Z_HUFFMAN_ONLY     = 2
-    Z_RLE              = 3
-    Z_FIXED            = 4
-
-  ZFlush* {.size: sizeof(cint).} = enum
-    Z_NO_FLUSH      = 0
-    Z_PARTIAL_FLUSH = 1
-    Z_SYNC_FLUSH    = 2
-    Z_FULL_FLUSH    = 3
-    Z_FINISH        = 4
-    Z_BLOCK         = 5
-    Z_TREES         = 6
-
-type
-  AllocFunc* = proc(ud: pointer, items: cuint, size: cuint): pointer {.cdecl.}
-  FreeFunc* = proc(ud: pointer, address: pointer){.cdecl.}
-
-  ZStream* {.final, pure.} = object
-    next_in*  : ptr uint8
-    avail_in* : cuint
-    total_in* : culong
-    next_out* : ptr uint8
-    avail_out*: cuint
-    total_out*: culong
-
-    msg*      : cstring
-    state*    : pointer
-    zalloc*   : AllocFunc
-    zfree*    : FreeFunc
-    opaque*   : pointer
-    dataType* : cint
-    adler*    : culong
-    reserved* : culong
-
-  GZHeader*{.final, pure.} = object # not defined yet (see zlib.h)
 
 const
-  ZLIB_VERSION = "1.4"
-  Z_DEFAULT_MEM_LEVEL*   = Z_MEM_8
-  Z_DEFAULT_WINDOW_BITS* = Z_WINDOW_BITS_15
-  Z_DEFAULT_LEVEL*       = Z_LEVEL_6
+  Z_NULL* = 0
 
-proc zlibVersion*(): ptr char {.cdecl, importc: "zlibVersion".}
 
-proc deflate*(zs: var ZStream, flush: ZFlush): ZError {.cdecl,
-  importc: "deflate".}
+proc zlibVersion*(): cstring {.cdecl, importc: "zlibVersion".}
 
-proc deflateEnd*(zs: var ZStream): ZError {.cdecl,
-  importc: "deflateEnd".}
+proc deflate*(zs: var ZStream; flush: ZFlush): ZError {.cdecl, importc: "deflate".}
 
-proc deflateReset*(zs: var ZStream): ZError {.cdecl,
-  importc: "deflateReset".}
+proc deflateEnd*(zs: var ZStream): ZError {.cdecl, importc: "deflateEnd".}
 
-proc deflateParams*(zs: var ZStream, level: ZLevel,
-  strategy: ZStrategy): ZError {.cdecl,
+proc inflate*(zs: var ZStream; flush: ZFlush): ZError {.cdecl, importc: "inflate".}
+
+proc inflateEnd*(zs: var ZStream): ZError {.cdecl, importc: "inflateEnd".}
+
+proc deflateSetDictionary*(zs: var ZStream; dictionary: ptr uint8; dictLength: cuint): ZError {.
+    cdecl, importc: "deflateSetDictionary".}
+
+proc deflateGetDictionary*(zs: var ZStream; dictionary: ptr uint8;
+                          dictLength: ptr cuint): ZError {.cdecl,
+    importc: "deflateGetDictionary".}
+
+proc deflateCopy*(dest: var ZStream; source: var ZStream): ZError {.cdecl,
+    importc: "deflateCopy".}
+
+proc deflateReset*(zs: var ZStream): ZError {.cdecl, importc: "deflateReset".}
+
+proc deflateParams*(zs: var ZStream; level: ZLevel; strategy: ZStrategy): ZError {.cdecl,
     importc: "deflateParams".}
 
-proc deflateInitu(zs: var ZStream, level: ZLevel, version: cstring,
-  streamSize: cint): ZError {.cdecl, importc: "deflateInit_".}
+proc deflateTune*(zs: var ZStream; good_length: cint; max_lazy: cint;
+                 nice_length: cint; max_chain: cint): ZError {.cdecl,
+    importc: "deflateTune".}
 
-proc deflateInit2u(zs: var ZStream, level: ZLevel, meth: ZMethod,
-  windowBits: ZWindowBits, memLevel: ZMemLevel, strategy: ZStrategy,
-  version: cstring, streamSize: cint): ZError {.cdecl,
-  importc: "deflateInit2_".}
+proc deflateBound*(zs: var ZStream; sourceLen: culong): culong {.cdecl,
+    importc: "deflateBound".}
+proc deflateBound_z*(zs: var ZStream; sourceLen: csize_t): csize_t {.cdecl,
+    importc: "deflateBound_z".}
 
-proc deflateInit*(zs: var ZStream, level: ZLevel): ZError =
-  deflateInitu(zs, level, ZLIB_VERSION, sizeof(ZStream).cint)
+proc deflatePending*(zs: var ZStream; pending: var cuint; bits: var cint): ZError {.cdecl,
+    importc: "deflatePending".}
 
-proc deflateInit2*(zs: var ZStream, level: ZLevel,
-  meth: ZMethod, windowBits: ZWindowBits,
-  memLevel: ZMemLevel, strategy: ZStrategy): ZError =
-  deflateInit2u(zs, level, meth, windowBits,
-    memLevel, strategy, ZLIB_VERSION, sizeof(ZStream).cint)
+proc deflateUsed*(zs: var ZStream; bits: var cint): ZError {.cdecl,
+    importc: "deflateUsed".}
 
-proc deflateBound*(zs: var ZStream, sourceLen: culong): culong {.cdecl,
-  importc: "deflateBound".}
+proc deflatePrime*(zs: var ZStream; bits: cint; value: cint): ZError {.cdecl,
+    importc: "deflatePrime".}
 
-proc inflate*(zs: var ZStream, flush: ZFlush): ZError {.cdecl,
-  importc: "inflate".}
+proc deflateSetHeader*(zs: var ZStream; head: GZHeaderp): ZError {.cdecl,
+    importc: "deflateSetHeader".}
 
-proc inflateEnd*(zs: var ZStream): ZError {.cdecl,
-  importc: "inflateEnd".}
+proc inflateSetDictionary*(zs: var ZStream; dictionary: ptr uint8; dictLength: cuint): ZError {.
+    cdecl, importc: "inflateSetDictionary".}
 
-proc inflateInitu(zs: var ZStream,
-  version: cstring, streamSize: cint): ZError {. cdecl,
-    importc: "inflateInit_".}
+proc inflateGetDictionary*(zs: var ZStream; dictionary: ptr uint8;
+                          dictLength: ptr cuint): ZError {.cdecl,
+    importc: "inflateGetDictionary".}
 
-proc inflateInit2u(zs: var ZStream, windowBits: ZWindowBits,
-  version: cstring, streamSize: cint): ZError {.cdecl,
-    importc: "inflateInit2_".}
+proc inflateSync*(zs: var ZStream): ZError {.cdecl, importc: "inflateSync".}
 
-proc inflateInit*(zs: var ZStream): ZError =
-  inflateInitu(zs, ZLIB_VERSION, sizeof(ZStream).cint)
+proc inflateCopy*(dest: var ZStream; source: var ZStream): ZError {.cdecl,
+    importc: "inflateCopy".}
 
-proc inflateInit2*(zs: var ZStream, windowBits: ZWindowBits): ZError =
-  inflateInit2u(zs, windowBits, ZLIB_VERSION, sizeof(ZStream).cint)
+proc inflateReset*(zs: var ZStream): ZError {.cdecl, importc: "inflateReset".}
 
-proc inflateReset*(zs: var ZStream): ZError {.cdecl,
-  importc: "inflateReset".}
-
-proc inflateReset2*(zs: var ZStream,
-  windowBits: ZWindowBits): ZError {.cdecl,
+proc inflateReset2*(zs: var ZStream; windowBits: cint): ZError {.cdecl,
     importc: "inflateReset2".}
 
-proc zError*(err: ZError): cstring {.cdecl, importc: "zError".}
+proc inflatePrime*(zs: var ZStream; bits: cint; value: cint): ZError {.cdecl,
+    importc: "inflatePrime".}
 
-proc crc32*(crc: culong, buf: ptr uint8, length: cuint): culong {.cdecl,
-  importc: "crc32".}
+proc inflateMark*(zs: var ZStream): clong {.cdecl, importc: "inflateMark".}
+
+proc inflateGetHeader*(zs: var ZStream; head: GZHeaderp): ZError {.cdecl,
+    importc: "inflateGetHeader".}
+
+type
+  in_func* = proc (a1: pointer; a2: ptr ptr uint8): cuint {.cdecl.}
+  out_func* = proc (a1: pointer; a2: ptr uint8; a3: cuint): cint {.cdecl.}
+
+proc inflateBack*(zs: var ZStream; `in`: in_func; in_desc: pointer; `out`: out_func;
+                 out_desc: pointer): ZError {.cdecl, importc: "inflateBack".}
+
+proc inflateBackEnd*(zs: var ZStream): ZError {.cdecl, importc: "inflateBackEnd".}
+
+proc zlibCompileFlags*(): culong {.cdecl, importc: "zlibCompileFlags".}
+
+proc compress*(dest: ptr uint8; destLen: var culong; source: ptr uint8; sourceLen: culong): ZError {.
+    cdecl, importc: "compress".}
+proc compress_z*(dest: ptr uint8; destLen: var csize_t; source: ptr uint8;
+                sourceLen: csize_t): ZError {.cdecl, importc: "compress_z".}
+
+proc compress2*(dest: ptr uint8; destLen: var culong; source: ptr uint8; sourceLen: culong;
+               level: ZLevel): ZError {.cdecl, importc: "compress2".}
+proc compress2_z*(dest: ptr uint8; destLen: var csize_t; source: ptr uint8;
+                 sourceLen: csize_t; level: ZLevel): ZError {.cdecl,
+    importc: "compress2_z".}
+
+proc compressBound*(sourceLen: culong): culong {.cdecl, importc: "compressBound".}
+proc compressBound_z*(sourceLen: csize_t): csize_t {.cdecl,
+    importc: "compressBound_z".}
+
+proc uncompress*(dest: ptr uint8; destLen: var culong; source: ptr uint8; sourceLen: culong): ZError {.
+    cdecl, importc: "uncompress".}
+proc uncompress_z*(dest: ptr uint8; destLen: var csize_t; source: ptr uint8;
+                  sourceLen: csize_t): ZError {.cdecl, importc: "uncompress_z".}
+
+proc uncompress2*(dest: ptr uint8; destLen: var culong; source: ptr uint8;
+                 sourceLen: ptr culong): ZError {.cdecl, importc: "uncompress2".}
+proc uncompress2_z*(dest: ptr uint8; destLen: var csize_t; source: ptr uint8;
+                   sourceLen: ptr csize_t): ZError {.cdecl, importc: "uncompress2_z".}
+
+type
+  gzFile* = ptr gzFile_s
+
+
+proc gzdopen*(fd: cint; mode: cstring): gzFile {.cdecl, importc: "gzdopen".}
+
+proc gzbuffer*(file: gzFile; size: cuint): cint {.cdecl, importc: "gzbuffer".}
+
+proc gzsetparams*(file: gzFile; level: ZLevel; strategy: ZStrategy): cint {.cdecl,
+    importc: "gzsetparams".}
+
+proc gzread*(file: gzFile; buf: pointer; len: cuint): cint {.cdecl, importc: "gzread".}
+
+proc gzfread*(buf: pointer; size: csize_t; nitems: csize_t; file: gzFile): csize_t {.
+    cdecl, importc: "gzfread".}
+
+proc gzwrite*(file: gzFile; buf: pointer; len: cuint): cint {.cdecl, importc: "gzwrite".}
+
+proc gzfwrite*(buf: pointer; size: csize_t; nitems: csize_t; file: gzFile): csize_t {.
+    cdecl, importc: "gzfwrite".}
+
+proc gzprintf*(file: gzFile; format: cstring): cint {.varargs, cdecl,
+    importc: "gzprintf".}
+
+proc gzputs*(file: gzFile; s: cstring): cint {.cdecl, importc: "gzputs".}
+
+proc gzgets*(file: gzFile; buf: cstring; len: cint): cstring {.cdecl, importc: "gzgets".}
+
+proc gzputc*(file: gzFile; c: cint): cint {.cdecl, importc: "gzputc".}
+
+proc gzgetc*(file: gzFile): cint {.cdecl, importc: "gzgetc".}
+
+proc gzungetc*(c: cint; file: gzFile): cint {.cdecl, importc: "gzungetc".}
+
+proc gzflush*(file: gzFile; flush: ZFlush): cint {.cdecl, importc: "gzflush".}
+
+proc gzrewind*(file: gzFile): cint {.cdecl, importc: "gzrewind".}
+
+proc gzeof*(file: gzFile): cint {.cdecl, importc: "gzeof".}
+
+proc gzdirect*(file: gzFile): cint {.cdecl, importc: "gzdirect".}
+
+proc gzclose*(file: gzFile): cint {.cdecl, importc: "gzclose".}
+
+proc gzclose_r*(file: gzFile): cint {.cdecl, importc: "gzclose_r".}
+proc gzclose_w*(file: gzFile): cint {.cdecl, importc: "gzclose_w".}
+
+proc gzerror*(file: gzFile; errnum: ptr cint): cstring {.cdecl, importc: "gzerror".}
+
+proc gzclearerr*(file: gzFile) {.cdecl, importc: "gzclearerr".}
+
+proc adler32*(adler: culong; buf: ptr uint8; len: cuint): culong {.cdecl, importc: "adler32".}
+
+proc adler32_z*(adler: culong; buf: ptr uint8; len: csize_t): culong {.cdecl,
+    importc: "adler32_z".}
+
+proc crc32*(crc: culong; buf: ptr uint8; len: cuint): culong {.cdecl, importc: "crc32".}
+
+proc crc32_z*(crc: culong; buf: ptr uint8; len: csize_t): culong {.cdecl,
+    importc: "crc32_z".}
+
+proc crc32_combine_op*(crc1: culong; crc2: culong; op: culong): culong {.cdecl,
+    importc: "crc32_combine_op".}
+
+proc deflateInitImpl(zs: var ZStream; level: ZLevel; version: cstring; stream_size: cint): ZError {.
+    cdecl, importc: "deflateInit_".}
+proc inflateInitImpl(zs: var ZStream; version: cstring; stream_size: cint): ZError {.
+    cdecl, importc: "inflateInit_".}
+proc deflateInit2Impl(zs: var ZStream; level: ZLevel; meth: ZMethod; windowBits: cint;
+                   memLevel: cint; strategy: ZStrategy; version: cstring; stream_size: cint): ZError {.
+    cdecl, importc: "deflateInit2_".}
+proc inflateInit2Impl(zs: var ZStream; windowBits: cint; version: cstring;
+                   stream_size: cint): ZError {.cdecl, importc: "inflateInit2_".}
+proc inflateBackInitImpl(zs: var ZStream; windowBits: cint; window: ptr uint8;
+                      version: cstring; stream_size: cint): ZError {.cdecl,
+    importc: "inflateBackInit_".}
+template deflateInit*(zs, level: untyped): untyped =
+  deflateInitImpl((zs), (level), ZLIB_VERSION,
+               cast[cint](sizeof((ZStream))))
+
+template inflateInit*(zs: untyped): untyped =
+  inflateInitImpl((zs), ZLIB_VERSION, cast[cint](sizeof((ZStream))))
+
+template deflateInit2*(zs, level, meth, windowBits, memLevel, strategy: untyped): untyped =
+  deflateInit2Impl((zs), (level), (meth), (windowBits), (memLevel), (strategy),
+                ZLIB_VERSION, cast[cint](sizeof((ZStream))))
+
+template inflateInit2*(zs, windowBits: untyped): untyped =
+  inflateInit2Impl((zs), (windowBits), ZLIB_VERSION,
+                cast[cint](sizeof((ZStream))))
+
+template inflateBackInit*(zs, windowBits, window: untyped): untyped =
+  inflateBackInitImpl((zs), (windowBits), (window), ZLIB_VERSION,
+                   cast[cint](sizeof((ZStream))))
+
+
+proc gzopen*(a1: cstring; a2: cstring): gzFile {.cdecl, importc: "gzopen".}
+proc gzseek*(a1: gzFile; a2: z_off_t; a3: cint): z_off_t {.cdecl, importc: "gzseek".}
+proc gztell*(a1: gzFile): z_off_t {.cdecl, importc: "gztell".}
+proc gzoffset*(a1: gzFile): z_off_t {.cdecl, importc: "gzoffset".}
+proc adler32_combine*(a1: culong; a2: culong; a3: z_off_t): culong {.cdecl,
+    importc: "adler32_combine".}
+proc crc32_combine*(a1: culong; a2: culong; a3: z_off_t): culong {.cdecl,
+    importc: "crc32_combine".}
+proc crc32_combine_gen*(a1: z_off_t): culong {.cdecl, importc: "crc32_combine_gen".}
+
+type
+  ZMemLevel* = cint
+  ZWindowBits* = cint
 
 const
+  Z_DEFAULT_LEVEL* = Z_DEFAULT_COMPRESSION
+  Z_DEFAULT_MEM_LEVEL*: ZMemLevel = 8
+  Z_DEFAULT_WINDOW_BITS*: ZWindowBits = 15
+  Z_RAW_DEFLATE*: ZWindowBits = -15
   Z_CRC32_INIT* = 0.culong
 
 func crc32*[T: byte|char](input: openArray[T]): culong =
@@ -215,71 +367,3 @@ func crc32*[T: byte|char](input: openArray[T]): culong =
     dataPtr,
     input.len.cuint
   ).culong
-
-proc deflateSetDictionary*(zs: var ZStream,
-  dictionary: ptr uint8, dictLength: cuint): ZError {.cdecl,
-    importc: "deflateSetDictionary".}
-
-proc deflateCopy*(dest: ZStream, source: var ZStream): ZError {.cdecl,
-  importc: "deflateCopy".}
-
-proc deflateTune*(zs: var ZStream, goodLength,
-  maxLazy, niceLength, maxChain: cint): ZError {.cdecl,
-    importc: "deflateTune".}
-
-proc deflatePending*(zs: var ZStream,
-  pending: var cuint, bits: var cint): ZError {.cdecl,
-    importc: "deflatePending".}
-
-proc deflatePrime*(zs: var ZStream, bits, value: cint): ZError {.cdecl,
-  importc: "deflatePrime".}
-
-proc deflateSetHeader*(zs: var ZStream,
-  head: ptr GZHeader): ZError {.cdecl,
-    importc: "deflateSetHeader".}
-
-proc inflateSetDictionary*(zs: var ZStream,
-  dictionary: ptr uint8, dictLength: cuint): ZError {.cdecl,
-    importc: "inflateSetDictionary".}
-
-proc inflateGetDictionary*(zs: var ZStream,
-  dictionary: ptr uint8, dictLength: ptr cuint): ZError {.cdecl,
-    importc: "inflateGetDictionary".}
-
-proc inflateSync*(zs: var ZStream): ZError {.cdecl,
-  importc: "inflateSync".}
-
-proc inflateCopy*(dest: ZStream, source: var ZStream): ZError {.cdecl,
-  importc: "inflateCopy".}
-
-proc inflatePrime*(zs: var ZStream,
-  bits: cint, value: cint): ZError {.cdecl,
-    importc: "inflatePrime".}
-
-proc inflateMark*(zs: var ZStream): clong {.cdecl,
-  importc: "inflateMark".}
-
-proc inflateGetHeader*(zs: var ZStream, head: ptr GZHeader): ZError {.cdecl,
-  importc: "inflateGetHeader".}
-
-proc zlibCompileFlags*(): culong {.cdecl,
-  importc: "zlibCompileFlags".}
-
-proc compress*(dest: ptr uint8, destLen: var culong,
-  source: ptr uint8, sourceLen: culong): ZError {.cdecl,
-    importc: "compress".}
-
-proc compress2*(dest: ptr uint8, destLen: var culong,
-  source: ptr uint8, sourceLen: culong, level: cint): ZError {.cdecl,
-    importc: "compress2".}
-
-proc uncompress*(dest: ptr uint8, destLen: var culong,
-  source: ptr uint8, sourceLen: culong): ZError {.cdecl,
-    importc: "uncompress".}
-
-proc compressBound*(sourceLen: culong): culong {.cdecl, importc.}
-
-proc inflateSyncPoint*(z: var ZStream): ZError {.cdecl,
-  importc: "inflateSyncPoint".}
-
-proc getCrcTable*(): pointer {.cdecl, importc: "get_crc_table".}
